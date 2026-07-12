@@ -1,0 +1,10 @@
+bin/
+obj/
+*.user
+reference/
+
+## Turzx GUI pictures and description
+pictures/
+
+## Development docs (implementation plans, reverse engineering notes)
+docs/

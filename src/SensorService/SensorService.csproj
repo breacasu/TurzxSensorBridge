@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Required so LibreHardwareMonitorLib's RID-specific implementation
+         DLL (runtimes/win-x64/lib/net472/LibreHardwareMonitorLib.dll) gets
+         copied to the output directory instead of only the metadata-only
+         reference assembly. See LibreHwAccess.csproj for details. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LibreHwAccess\LibreHwAccess.csproj" />
+  </ItemGroup>
+
+</Project>

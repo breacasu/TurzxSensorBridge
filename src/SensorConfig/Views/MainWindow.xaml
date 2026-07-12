@@ -1,0 +1,146 @@
+<Window x:Class="SensorConfig.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SensorConfig.ViewModels"
+        xmlns:lha="clr-namespace:LibreHwAccess;assembly=LibreHwAccess"
+        xmlns:models="clr-namespace:SensorConfig.Models"
+        mc:Ignorable="d"
+        Title="TurzxSensorBridge - Sensor Configuration" Height="650" Width="950"
+        WindowStartupLocation="CenterScreen">
+    <Window.InputBindings>
+        <KeyBinding Key="Enter" Command="{Binding AddMappingCommand}"/>
+    </Window.InputBindings>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock Text="TurzxSensorBridge - Sensor Configuration" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+            <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
+        </StackPanel>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="5*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="5*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Available Sensors (left) -->
+            <Grid Grid.Column="0" Margin="0,0,5,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBox Grid.Row="0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,5" Padding="4" ToolTip="Filter by device name or sensor label"/>
+
+                <GroupBox Grid.Row="1" Header="Available Sensors">
+                    <ListBox ItemsSource="{Binding FilteredSensors}"
+                             SelectedItem="{Binding SelectedAvailableSensor}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="lha:LibreSensorReading">
+                                <Grid ToolTip="{Binding ReadingType}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding DeviceName}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding LabelOrig}" FontSize="11" Foreground="Gray"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                Margin="10,0,0,0">
+                                        <TextBlock Text="{Binding Value, StringFormat={}{0:F1}}" FontWeight="Bold"
+                                                   HorizontalAlignment="Right"/>
+                                        <TextBlock Text="{Binding Unit}" FontSize="11" Foreground="Gray"
+                                                   HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </GroupBox>
+            </Grid>
+
+            <!-- Middle controls -->
+            <Grid Grid.Column="1" Margin="10,30,10,0" VerticalAlignment="Top">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBox Grid.Row="0" Text="{Binding AliasInput, UpdateSourceTrigger=PropertyChanged}"
+                         Width="140" Padding="4" ToolTip="Enter an alias for the selected sensor"/>
+
+                <Button Grid.Row="1" Content="Add →" Command="{Binding AddMappingCommand}"
+                        Width="120" Margin="0,5,0,0" Padding="6,4"
+                        IsEnabled="{Binding SelectedAvailableSensor, Converter={x:Null}}"/>
+
+                <Button Grid.Row="3" Content="← Remove" Command="{Binding RemoveMappingCommand}"
+                        Width="120" Margin="0,20,0,0" Padding="6,4"/>
+
+                <Button Grid.Row="4" Content="Refresh" Command="{Binding RefreshCommand}"
+                        Width="120" Margin="0,5,0,0" Padding="6,4"/>
+            </Grid>
+
+            <!-- Selected Mappings (right) -->
+            <GroupBox Grid.Column="2" Header="Active Mappings" Margin="5,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox Grid.Row="0" ItemsSource="{Binding SelectedSensors}"
+                             SelectedItem="{Binding SelectedMapping}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="models:SelectedSensorModel">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Alias}" FontWeight="SemiBold"/>
+                                        <TextBlock FontSize="11" Foreground="Gray">
+                                            <Run Text="{Binding DeviceName, Mode=OneWay}"/>
+                                            <Run Text="/"/>
+                                            <Run Text="{Binding LabelOrig, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right"
+                                                Margin="10,2,0,0">
+                                        <TextBlock Text="{Binding ReadingType}" FontSize="10" Foreground="DimGray"
+                                                   HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Button Grid.Row="1" Content="Save Configuration" Command="{Binding SaveCommand}"
+                            Margin="0,10,0,0" Padding="8,6" HorizontalAlignment="Right"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- Bottom status -->
+        <StatusBar Grid.Row="2" Margin="0,10,0,0">
+            <TextBlock Text="{Binding StatusMessage}"/>
+        </StatusBar>
+    </Grid>
+</Window>

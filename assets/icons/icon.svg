@@ -1,0 +1,51 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#1A1A1A" rx="64"/>
+
+  <!-- 3x2 grid of sensor symbols, each at radius ~65.
+       Column centers: 110, 256, 402 (gap of 146 between centers,
+       with symbol radius 65 leaves ~16px breathing room). -->
+
+  <!-- Row 1, Column 1: Temperature gauge -->
+  <g transform="translate(110 150)">
+    <circle r="65" fill="none" stroke="#00D4FF" stroke-width="8" opacity="0.35"/>
+    <path d="M0 -65 A65 65 0 1 1 -58 -30" fill="none" stroke="#00D4FF" stroke-width="8" stroke-linecap="round"/>
+    <circle r="7" fill="#00D4FF"/>
+    <line x1="0" y1="0" x2="34" y2="-34" stroke="#00D4FF" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Row 1, Column 2: Fan -->
+  <g transform="translate(256 150)">
+    <circle r="65" fill="none" stroke="#FFC107" stroke-width="5"/>
+    <circle r="14" fill="#FFC107"/>
+    <g fill="#FFC107">
+      <ellipse cx="0" cy="-38" rx="16" ry="30"/>
+      <ellipse cx="0" cy="-38" rx="16" ry="30" transform="rotate(120)"/>
+      <ellipse cx="0" cy="-38" rx="16" ry="30" transform="rotate(240)"/>
+    </g>
+  </g>
+
+  <!-- Row 1, Column 3: Bar gauge -->
+  <g transform="translate(402 150)">
+    <rect x="-58" y="-18" width="116" height="22" rx="11" fill="#007BFF" opacity="0.3"/>
+    <rect x="-58" y="-18" width="80" height="22" rx="11" fill="#007BFF"/>
+    <rect x="-58" y="14" width="116" height="10" rx="5" fill="#007BFF" opacity="0.3"/>
+    <rect x="-58" y="14" width="36" height="10" rx="5" fill="#007BFF"/>
+  </g>
+
+  <!-- Row 2, Column 1: Flow droplet -->
+  <g transform="translate(110 380)">
+    <path d="M0 -60 C0 -60 -44 -16 -44 22 C-44 46 -24 62 0 62 C24 62 44 46 44 22 C44 -16 0 -60 0 -60 Z" fill="#00FF88"/>
+    <path d="M-16 12 C-16 12 -26 26 -26 38" stroke="#1A1A1A" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- Row 2, Column 2: Power/lightning -->
+  <g transform="translate(256 380)">
+    <polygon points="-14,-62 -36,12 -10,12 -22,62 36,-18 6,-18 22,-62" fill="#FF6B6B"/>
+  </g>
+
+  <!-- Row 2, Column 3: Voltage/sine wave -->
+  <g transform="translate(402 380)">
+    <circle r="65" fill="none" stroke="#A78BFA" stroke-width="6" opacity="0.35"/>
+    <path d="M-50 0 L-30 0 L-20 -36 L0 36 L20 -36 L30 0 L50 0" fill="none" stroke="#A78BFA" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

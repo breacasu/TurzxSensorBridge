@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- LibreHardwareMonitorLib's NuGet package ships RID-specific
+         implementation assemblies (runtimes/win-x64/lib/net472/...) with
+         only a metadata-only reference assembly under lib/net472 for
+         compile-time use. Without a RuntimeIdentifier, the real
+         implementation DLL is never copied to the output directory,
+         causing a BadImageFormatException at runtime. TURZX/TurzxPatcher
+         run as 64-bit processes, so win-x64 is the correct RID here. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- LibreHardwareMonitorLib reads sensors directly via its own drivers
+         (WinRing0/kernel driver for hardware access), independent of any
+         third-party monitoring tool's UI state. This solves the problem
+         where HWiNFO's Shared Memory only gets updated while HWiNFO's own
+         sensor window is open/visible - LibreHardwareMonitor has no such
+         requirement, making it usable regardless of whether the user runs
+         HWiNFO, AIDA64, or nothing else at all. -->
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+  </ItemGroup>
+
+</Project>
