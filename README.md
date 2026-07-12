@@ -2,9 +2,6 @@
 
 **Custom Aquacomputer/Hardware Sensor Support for TURZX**
 
-**Author:** breacasu (breacasu@posteo.de)  
-**Repository:** https://github.com/breacasu/TurzxSensorBridge
-
 ## Overview
 
 TurzxSensorBridge enables custom hardware sensors (especially Aquacomputer devices like D5 Next, Quadro, highflow NEXT) to be used in the TURZX screen theme editor's "Data Source" dropdown, alongside the built-in sensors. It injects sensor data directly into TURZX's own data model via a plugin loaded by TurzxPatcher - no modification of TURZX.exe itself.
@@ -42,27 +39,27 @@ LibreHardwareMonitor reads sensors directly via its own driver and has no such r
 ## Architecture
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────────────────┐
-│  Aquacomputer    │────▶│   SensorService  │────▶│         TurzxPatcher       │
-│  Devices (USB)   │     │  (Named Pipe,    │     │  ┌──────────────────────┐  │
-│                  │     │   unidirectional │     │  │  PatchModule.dll     │  │
-│                  │     │   push, 1x/sec)  │     │  │  (plugin loaded into │  │
-└─────────────────┘     └──────────────────┘     │  │   TURZX — does ALL   │  │
-                                 │                │  │   the injection:     │  │
-                                 ▼                │  │   M_Data creation,   │  │
-                        ┌──────────────────┐     │  │   AcceptDataList     │  │
-                        │  LibreHwAccess   │     │  │   patch, live value  │  │
-                        │  (LibreHardware- │     │  │   push)              │  │
-                        │  Monitor driver) │     │  └──────────────────────┘  │
-                        └──────────────────┘     └─────────────────────────────┘
+┌─────────────────┐     ┌───────────────────┐     ┌─────────────────────────────┐
+│  Aquacomputer   │────▶│   SensorService   │────▶│         TurzxPatcher        │
+│  Devices (USB)  │     │  (Named Pipe,     │     │  ┌───────────────────────┐  │
+│                 │     │   unidirectional  │     │  │  PatchModule.dll      │  │
+│                 │     │   push, 1x/sec)   │     │  │  (plugin loaded into  │  │
+└─────────────────┘     └───────────────────┘     │  │   TURZX — does ALL    │  │
+                                 │                │  │   the injection:      │  │
+                                 ▼                │  │   M_Data creation,    │  │
+                        ┌───────────────────┐     │  │   AcceptDataList      │  │
+                        │  LibreHwAccess    │     │  │   patch, live value   │  │
+                        │  (LibreHardware-  │     │  │   push)               │  │
+                        │  Monitor driver)  │     │  └───────────────────────┘  │
+                        └───────────────────┘     └─────────────────────────────┘
                                                               │
                                                               ▼
-                                                    ┌─────────────────┐
-                                                    │   TURZX.exe     │
-                                                    │  (Theme Editor  │
-                                                    │  displays       │
-                                                    │  sensor values) │
-                                                    └─────────────────┘
+                                                    ┌──────────────────┐
+                                                    │   TURZX.exe      │
+                                                    │  (Theme Editor   │
+                                                    │  displays        │
+                                                    │  sensor values)  │
+                                                    └──────────────────┘
 ```
 
 ## Components
@@ -107,8 +104,7 @@ TURZX's own per-theme update loop refreshes sensor values (built-in and custom) 
 ### Prerequisites
 - [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48) (TURZX itself runs on net48, so all components target net48 too)
 - [TurzxPatcher](https://github.com/breacasu/TurzxPatcher) (must be installed; handles plugin discovery and loading)
-- [TURZX](https://www.ultraxd.de/) (v3.1.0 or later)
-- Administrator privileges when running TURZX/TurzxPatcher (see warning above)
+- [TURZX](https://www.turzx.com/2023/03/02/%E7%9B%B4%E9%93%BE%E4%B8%8B%E8%BD%BDdirectdownload/) (v4.2.1.3 or later)
 
 ### Build from Source
 
@@ -120,7 +116,34 @@ dotnet build TurzxSensorBridge.sln -c Release
 
 ## Usage
 
-### 1. Configure Sensors
+The following steps must be performed in order:
+
+### Step 1: Install TurzxPatcher into the TURZX directory
+
+Copy `TurzxPatcher.exe` into the same folder where `TURZX.exe` lives (your TURZX installation directory). See the [TurzxPatcher README](https://github.com/breacasu/TurzxPatcher) for details.
+
+### Step 2: Build TurzxSensorBridge
+
+```powershell
+dotnet build TurzxSensorBridge.sln -c Release
+```
+
+### Step 3: Deploy PatchModule + SensorService into the TURZX directory
+
+Copy the built files into a `patches\` subfolder **inside your TURZX installation directory** (the same folder where `TURZX.exe` and `TurzxPatcher.exe` are located):
+
+```
+TURZX installation directory\          ← where TURZX.exe and TurzxPatcher.exe live
+└── patches\                           ← create this subfolder
+    ├── PatchModule.dll                ← from src\PatchModule\bin\Release\net48\
+    └── SensorService\                 ← create this subfolder
+        └── SensorService.exe          ← from src\SensorService\bin\Release\net48\win-x64\
+            (+ all other files from that output directory)
+```
+
+`PatchModule` resolves `SensorService`'s path relative to its own location (`patches\SensorService\SensorService.exe`), checks a named mutex to see if it's already running, and starts it if not - no manual `SensorService.exe` startup step needed.
+
+### Step 4: Configure Sensors
 
 Use `SensorConfig.exe` (recommended GUI tool) to select sensors and assign aliases, or edit `%APPDATA%\TurzxSensorBridge\selected_sensors.json` directly:
 
@@ -136,25 +159,11 @@ Use `SensorConfig.exe` (recommended GUI tool) to select sensors and assign alias
 - `labelOrig`, `deviceName`, `readingType`: Must match a sensor reported by LibreHardwareMonitor exactly (device names, e.g. `D5Next` or `QUADRO`, differ from HWiNFO's naming). Use `SensorConfig` (recommended) or `tests/LibreHwTest` to list all detected sensors and their exact names.
 - `readingType` is required whenever a device exposes multiple sensors with the identical label under different reading types (e.g. Aqua Computer Quadro's "Fan #1" exists once each as Voltage, Current, Power, and Fan/RPM) - without it, matching is ambiguous and may pick the wrong sensor.
 
-### 2. Deploy PatchModule + SensorService
-
-`PatchModule.dll` auto-starts `SensorService.exe` on TURZX launch (no need to start it manually), but it looks for it at a specific relative path. Deploy like this:
-
-```
-TurzxPatcher-install-dir\
-└── patches\
-    ├── PatchModule.dll                      (from src/PatchModule/bin/Release/net48/)
-    └── SensorService\
-        └── SensorService.exe                (+ all files from src/SensorService/bin/Release/net48/win-x64/)
-```
-
-`PatchModule` resolves `SensorService`'s path relative to its own location (`patches\SensorService\SensorService.exe`), checks a named mutex to see if it's already running, and starts it if not - no manual `SensorService.exe` startup step needed.
-
-### 3. Launch TURZX via TurzxPatcher (as Administrator)
+### Step 5: Launch TURZX via TurzxPatcher (as Administrator)
 
 Run `TurzxPatcher.exe` **as Administrator** - it copies itself next to `TURZX.exe`, discovers `PatchModule.dll`, auto-starts `SensorService.exe` if needed, and launches TURZX with the patch applied.
 
-### 4. Use in TURZX Theme Editor
+### Step 6: Use in TURZX Theme Editor
 
 Open the Theme Editor (stop the running theme on a device, then click "Edit Theme"), select a widget, and open the "Data Source" dropdown - your configured sensors will appear alongside the built-in ones (may take up to ~1 second to appear after selecting a widget).
 
@@ -237,22 +246,26 @@ TurzxSensorBridge/
 
 ## License
 
-MIT
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE).
 
-## Contributing
+### Third-Party Dependencies
 
-Contributions are welcome! Please open an issue or submit a pull request.
+| Library | License | Purpose | Bundled? |
+|---------|---------|---------|----------|
+| [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (v0.9.6) | [MPL 2.0](https://www.mozilla.org/en-US/MPL/2.0/) | Hardware sensor access (CPU, GPU, Aquacomputer, etc.) via its own kernel driver | Yes — `LibreHardwareMonitorLib.dll` is copied to the SensorService output directory at build time and deployed alongside `SensorService.exe` |
+| [Newtonsoft.Json](https://www.newtonsoft.com/json) (v13.0.3) | [MIT](https://opensource.org/licenses/MIT) | JSON serialization in SensorConfig | Yes |
+| [System.Memory](https://www.nuget.org/packages/System.Memory) et al. | [MIT](https://opensource.org/licenses/MIT) | .NET Standard backports for net48 | Yes |
 
-## Support
+LibreHardwareMonitorLib is licensed under the Mozilla Public License 2.0 (MPL 2.0), which is a weak copyleft license. The MPL-licensed `LibreHardwareMonitorLib.dll` is distributed as a separate, unmodified binary alongside this project's own MIT-licensed code. For the full text of the MPL 2.0 license, see https://www.mozilla.org/en-US/MPL/2.0/.
 
-For issues and questions:
-- GitHub Issues: https://github.com/breacasu/TurzxSensorBridge/issues
-- Email: breacasu@posteo.de
+## Disclaimer
+
+This tool is provided as-is for educational and experimental purposes. Use at your own risk. The developers are not responsible for any damage to your hardware or software. Always backup your TURZX.exe before using this patcher.
 
 ## Related Projects
 
 - [TurzxPatcher](https://github.com/breacasu/TurzxPatcher) - TURZX patch loader and plugin host
-- [TURZX](https://www.ultraxd.de/) - Universal screen themes for Windows
+- [TURZX](https://www.turzx.com/) - Universal screen themes for Windows
 
 ## Version History
 

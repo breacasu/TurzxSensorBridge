@@ -124,7 +124,7 @@ namespace SensorService
         private static List<SelectedSensorEntry> ParseConfig(string json)
         {
             var result = new List<SelectedSensorEntry>();
-            int idx = json.IndexOf("\"selectedSensors\"");
+            int idx = json.IndexOf("\"selectedSensors\"", StringComparison.OrdinalIgnoreCase);
             if (idx < 0) return result;
 
             int arrStart = json.IndexOf('[', idx);
@@ -159,7 +159,7 @@ namespace SensorService
 
         private static string ExtractJsonString(string json, string key)
         {
-            int keyIdx = json.IndexOf($"\"{key}\"");
+            int keyIdx = json.IndexOf($"\"{key}\"", StringComparison.OrdinalIgnoreCase);
             if (keyIdx < 0) return string.Empty;
 
             int colonIdx = json.IndexOf(':', keyIdx + key.Length + 2);
