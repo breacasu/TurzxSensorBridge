@@ -92,9 +92,19 @@ namespace PatchModule
                     // returns false immediately and we must NOT release
                     // a mutex we don't own, so only release when we did
                     // acquire it.
-                    alreadyRunning = !mutex.WaitOne(TimeSpan.Zero, false);
-                    if (!alreadyRunning)
+                    try
+                    {
+                        alreadyRunning = !mutex.WaitOne(TimeSpan.Zero, false);
+                        if (!alreadyRunning)
+                            mutex.ReleaseMutex();
+                    }
+                    catch (System.Threading.AbandonedMutexException)
+                    {
+                        // Previous SensorService crashed and abandoned the mutex.
+                        // We now own it — release so the new instance can acquire it.
                         mutex.ReleaseMutex();
+                        alreadyRunning = false;
+                    }
                 }
 
                 if (alreadyRunning)

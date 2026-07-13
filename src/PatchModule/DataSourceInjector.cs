@@ -99,8 +99,8 @@ namespace PatchModule
                 DiagnoseLargeStaticFields();
 
                 IsInitialized = true;
-                Console.WriteLine("[TurzxSensorBridge] Scheduling DeferredDiagnostic in 10s");
-                _diagTimer = new Timer(_ => DeferredDiagnostic(), null, 10000, Timeout.Infinite);
+                Console.WriteLine("[TurzxSensorBridge] Scheduling periodic DeferredDiagnostic (first in 10s, then every 30s)");
+                _diagTimer = new Timer(_ => DeferredDiagnostic(), null, 10000, 30000);
                 return true;
             }
             catch (Exception ex)

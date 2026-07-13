@@ -106,7 +106,23 @@ TURZX's own per-theme update loop refreshes sensor values (built-in and custom) 
 - [TurzxPatcher](https://github.com/breacasu/TurzxPatcher) (must be installed; handles plugin discovery and loading)
 - [TURZX](https://www.turzx.com/2023/03/02/%E7%9B%B4%E9%93%BE%E4%B8%8B%E8%BD%BDdirectdownload/) (v4.2.1.3 or later)
 
-### Build from Source
+### Option A: Combined Installer (recommended)
+
+Download `TurzxPatcherSetup-*.exe` from the [latest TurzxSensorBridge release](https://github.com/breacasu/TurzxSensorBridge/releases). The installer:
+
+- Auto-detects your TURZX installation directory (registry + common paths + browse)
+- Copies `TurzxPatcher.exe` and `patches\` (PatchModule + SensorService) into the TURZX directory
+- Installs `SensorConfig.exe` into Program Files with Start Menu shortcut
+- Offers an **"Start TurzxPatcher automatically with Windows"** checkbox (HKCU Run entry)
+- Requires Administrator privileges (.NET 4.8 and USB driver access)
+
+On uninstall, the autostart entry and all installed files are cleaned up automatically.
+
+### Option B: Manual Installation
+
+If you prefer to build from source or deploy manually, see [Usage](#usage) below for the step-by-step guide.
+
+#### Build from Source
 
 ```powershell
 git clone https://github.com/breacasu/TurzxSensorBridge.git
@@ -260,7 +276,7 @@ LibreHardwareMonitorLib is licensed under the Mozilla Public License 2.0 (MPL 2.
 
 ## Disclaimer
 
-This tool is provided as-is for educational and experimental purposes. Use at your own risk. The developers are not responsible for any damage to your hardware or software. Always backup your TURZX.exe before using this patcher.
+This tool is provided as-is for educational and experimental purposes. Use at your own risk. The developer is not responsible for any damage to your hardware or software. Always backup your TURZX.exe before using this patcher.
 
 ## Related Projects
 
@@ -269,7 +285,11 @@ This tool is provided as-is for educational and experimental purposes. Use at yo
 
 ## Version History
 
-### v2.0.0 (2026-07-11)
+### v2.1.0 (Current)
+- Added combined installer (`TurzxPatcherSetup-*.exe`) with TURZX path auto-detection, .NET 4.8 check, component selection, and optional Windows autostart checkbox
+- TurzxPatcher now supports `--autostart on|off|status` CLI commands for Windows autostart management
+
+### v2.0.0
 - Switched sensor source from HWiNFO Shared Memory to LibreHardwareMonitor (works regardless of HWiNFO/AIDA64 UI state)
 - Fixed Data Source ComboBox visibility (AcceptDataList whitelist patch)
 - Fixed crash on selecting a custom sensor (XPath-unsafe DataName, uninitialized M_Data fields)
@@ -278,7 +298,7 @@ This tool is provided as-is for educational and experimental purposes. Use at yo
 - Fixed live value freezing after the initial selection (direct per-frame value push instead of relying on TURZX's one-time fallback refresh)
 - Added auto-start of SensorService.exe from PatchModule (no more manual multi-step startup)
 
-### v1.0.0 (2026-07-10)
+### v1.0.0
 - Initial implementation
 - HWiNFO Shared Memory based sensor reading
 - Named pipe IPC

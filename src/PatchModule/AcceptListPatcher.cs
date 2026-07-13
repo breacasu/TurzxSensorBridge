@@ -431,7 +431,7 @@ namespace PatchModule
                 foreach (var item in items)
                 {
                     var dn = _dataNameProp?.GetValue(item) as string;
-                    if (!string.IsNullOrEmpty(dn)) present.Add(dn);
+                    if (!string.IsNullOrEmpty(dn)) present.Add(dn!);
                 }
 
                 int added = 0;
@@ -525,7 +525,7 @@ namespace PatchModule
                 string? ourDisplayName;
                 lock (_aliasLock)
                 {
-                    if (!_displayNameByDataName.TryGetValue(dataName, out ourDisplayName)) return;
+                    if (!_displayNameByDataName.TryGetValue(dataName!, out ourDisplayName)) return;
                 }
 
                 var currentDisplayName = _mDataDisplayNameProp.GetValue(mData) as string;
@@ -597,7 +597,7 @@ namespace PatchModule
                 string? formattedValue;
                 lock (_aliasLock)
                 {
-                    if (!_formattedValueByDataName.TryGetValue(dataName, out formattedValue)) return;
+                    if (!_formattedValueByDataName.TryGetValue(dataName!, out formattedValue)) return;
                 }
 
                 var currentValue = _mDataValueProp.GetValue(mData) as string;
