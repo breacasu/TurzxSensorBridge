@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout TurzxSensorBridge
+        uses: actions/checkout@v4
+
+      - name: Checkout TurzxPatcher
+        uses: actions/checkout@v4
+        with:
+          repository: breacasu/TurzxPatcher
+          path: TurzxPatcher
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress --yes
+
+      - name: Extract version from tag
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -match 'refs/tags/v(.+)') {
+            $version = $matches[1]
+          } else {
+            $version = '0.0.0-dev'
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $version"
+
+      - name: Build and compile installer
+        run: |
+          powershell -ExecutionPolicy Bypass -File TurzxPatcher\installer\build.ps1 -SensorBridgeRepo "."
+
+      - name: Verify installer output
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem TurzxPatcher\installer\output\*.exe | Select-Object -First 1
+          if (-not $installer) {
+            Write-Error "No installer .exe found in TurzxPatcher\installer\output\"
+            exit 1
+          }
+          Write-Host "Installer: $($installer.FullName) ($([Math]::Round($installer.Length/1MB, 2)) MB)"
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $installer = (Get-ChildItem TurzxPatcher\installer\output\*.exe | Select-Object -First 1).FullName
+
+          $releaseArgs = @(
+            'release', 'create', "v$version",
+            $installer,
+            '--title', "v$version",
+            '--notes', "## TurzxSensorBridge v$version`n`nCombined installer for TurzxPatcher + TurzxSensorBridge.`n`nDownload and run the installer exe. It will auto-detect your TURZX installation directory and deploy all components.`n`n### Components`n- TurzxPatcher.exe (A088 display patch + plugin host)`n- TurzxSensorBridge (PatchModule + SensorService + SensorConfig)`n`n### Requirements`n- Windows x64`n- .NET Framework 4.8`n- TURZX V4.2.1.3 or later`n- Administrator privileges`n`n### Also requires [TurzxPatcher](https://github.com/breacasu/TurzxPatcher)`n(Bundled in this installer — no separate download needed)",
+            '--verify-tag'
+          )
+          & gh @releaseArgs
