@@ -153,7 +153,7 @@ namespace PatchModule
                 foreach (var sensor in sensors)
                 {
                     _injector?.EnsureSensor(sensor.Alias, sensor.LabelOrig, sensor.DeviceName);
-                    _injector?.UpdateSensorValue(sensor.Alias, sensor.Value);
+                    _injector?.UpdateSensorValue(sensor.Alias, sensor.Value, NormalizeUnit(sensor.Unit));
                     _aliasToLabel[sensor.Alias] = sensor.LabelOrig;
 
                     // Keyed by the same sanitized DataName AcceptListPatcher
@@ -162,7 +162,11 @@ namespace PatchModule
                     // needed (TURZX's own update loop only refreshes a
                     // custom sensor's displayed value once, not every frame).
                     string dataName = DataSourceInjector.SanitizeForXPath(sensor.Alias);
-                    _formattedValueByDataName[dataName] = sensor.Value.ToString("0.##", CultureInfo.InvariantCulture);
+                    string unit = NormalizeUnit(sensor.Unit);
+                    string formatted = sensor.Value.ToString("0.##", CultureInfo.InvariantCulture);
+                    if (!string.IsNullOrEmpty(unit))
+                        formatted += " " + unit;
+                    _formattedValueByDataName[dataName] = formatted;
                 }
                 _acceptListPatcher?.SetAliases(_aliasToLabel.Keys);
                 if (_injector != null)
@@ -209,7 +213,8 @@ namespace PatchModule
                     Alias = ExtractJsonValue(inner, "alias"),
                     LabelOrig = ExtractJsonValue(inner, "labelOrig"),
                     DeviceName = ExtractJsonValue(inner, "deviceName"),
-                    Value = ExtractJsonNumber(inner, "value")
+                    Value = ExtractJsonNumber(inner, "value"),
+                    Unit = ExtractJsonValue(inner, "unit")
                 };
 
                 if (!string.IsNullOrEmpty(entry.Alias) && !string.IsNullOrEmpty(entry.LabelOrig))
@@ -221,6 +226,22 @@ namespace PatchModule
             }
 
             return result;
+        }
+
+        private static string NormalizeUnit(string lhmUnit)
+        {
+            if (string.IsNullOrEmpty(lhmUnit)) return "";
+            switch (lhmUnit.Trim())
+            {
+                case "°C": return "°";
+                case "RPM": return "R";
+                case "W":   return "W";
+                case "V":   return "V";
+                case "%":   return "%";
+                case "L/h": return "L/h";
+                case "uS/cm": return "µS";
+                default: return lhmUnit;
+            }
         }
 
         private static string ExtractJsonValue(string json, string key)
@@ -270,6 +291,7 @@ namespace PatchModule
             public string LabelOrig;
             public string DeviceName;
             public double Value;
+            public string Unit;
         }
     }
 }

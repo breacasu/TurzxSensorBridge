@@ -230,7 +230,7 @@ namespace PatchModule
         /// called whenever the user selects a sensor in the Theme Editor).</summary>
         public IReadOnlyDictionary<string, string> DisplayNameByDataName => _displayNameByDataName;
 
-        public bool UpdateSensorValue(string alias, double value)
+        public bool UpdateSensorValue(string alias, double value, string unit = "")
         {
             if (!IsInitialized) return false;
             if (!_sensorObjects.TryGetValue(alias, out var obj)) return false;
@@ -248,6 +248,8 @@ namespace PatchModule
                 // M_Data's internal DataQueue/ValueWithUnit refresh logic
                 // runs exactly like it does for built-in sensors.
                 string formatted = value.ToString("0.##", CultureInfo.InvariantCulture);
+                if (!string.IsNullOrEmpty(unit))
+                    formatted += " " + unit;
                 _valueStringProp?.SetValue(obj, formatted);
 
                 return true;

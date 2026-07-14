@@ -29,6 +29,7 @@ If TURZX is not run as Administrator, you will see a message that sensors could 
 - **Auto-start:** `PatchModule` automatically starts `SensorService.exe` when TURZX launches - no need to manually start multiple programs in the right order.
 - **Named Pipe Communication:** Unidirectional push IPC between `SensorService` and the TURZX-hosted `PatchModule`.
 - **Data Source ComboBox integration:** Custom sensors appear in the Theme Editor's "Data Source" dropdown and can be assigned to any widget, just like built-in sensors, with continuously updating live values.
+- **Unit display:** Custom sensors display with units matching TURZX's built-in style (`°` for temperature, `R` for RPM, `W` for power, `V` for voltage, `%` for load, `L/h` for flow, `µS` for conductivity).
 
 ## Why LibreHardwareMonitor (not HWiNFO Shared Memory)?
 
@@ -285,7 +286,10 @@ This tool is provided as-is for educational and experimental purposes. Use at yo
 
 ## Version History
 
-### v2.1.0 (Current)
+### v2.2.0 (Current)
+- Custom sensors now display units matching TURZX's built-in style (°, R, W, V, %, L/h, µS)
+
+### v2.1.0
 - Added combined installer (`TurzxPatcherSetup-*.exe`) with TURZX path auto-detection, .NET 4.8 check, component selection, and optional Windows autostart checkbox
 - TurzxPatcher now supports `--autostart on|off|status` CLI commands for Windows autostart management
 
