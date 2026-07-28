@@ -21,6 +21,9 @@ namespace SensorConfig.Models
         public string DeviceName { get; set; } = string.Empty;
         public string ReadingType { get; set; } = string.Empty;
 
+        public double? Min { get; set; }
+        public double? Max { get; set; }
+
         private double _currentValue;
         public double CurrentValue
         {

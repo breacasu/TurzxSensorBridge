@@ -14,19 +14,12 @@
     </Window.InputBindings>
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="TurzxSensorBridge - Sensor Configuration" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
-            <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
-        </StackPanel>
-
         <!-- Main Content -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="5*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -34,17 +27,17 @@
             </Grid.ColumnDefinitions>
 
             <!-- Available Sensors (left) -->
-            <Grid Grid.Column="0" Margin="0,0,5,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+            <GroupBox Grid.Column="0" Header="Available Sensors" Margin="0,0,5,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                <TextBox Grid.Row="0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="0,0,0,5" Padding="4" ToolTip="Filter by device name or sensor label"/>
+                    <TextBox Grid.Row="0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,5" Padding="4" ToolTip="Filter by device name or sensor label"/>
 
-                <GroupBox Grid.Row="1" Header="Available Sensors">
-                    <ListBox ItemsSource="{Binding FilteredSensors}"
+                    <ListBox Grid.Row="1" ItemsSource="{Binding FilteredSensors}"
                              SelectedItem="{Binding SelectedAvailableSensor}"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
@@ -69,32 +62,24 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                </GroupBox>
-            </Grid>
+                </Grid>
+            </GroupBox>
 
             <!-- Middle controls -->
-            <Grid Grid.Column="1" Margin="10,30,10,0" VerticalAlignment="Top">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0" Width="150">
+                <TextBlock Text="Alias *" FontSize="11" Foreground="DimGray" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding AliasInput, UpdateSourceTrigger=PropertyChanged}"
+                         Padding="4" ToolTip="Enter an alias for the selected sensor (required)"/>
 
-                <TextBox Grid.Row="0" Text="{Binding AliasInput, UpdateSourceTrigger=PropertyChanged}"
-                         Width="140" Padding="4" ToolTip="Enter an alias for the selected sensor"/>
+                <Button Content="Add &#x2192;" Command="{Binding AddMappingCommand}"
+                        Margin="0,10,0,0" Padding="6,4"/>
 
-                <Button Grid.Row="1" Content="Add →" Command="{Binding AddMappingCommand}"
-                        Width="120" Margin="0,5,0,0" Padding="6,4"
-                        IsEnabled="{Binding SelectedAvailableSensor, Converter={x:Null}}"/>
+                <Button Content="&#x2190; Remove" Command="{Binding RemoveMappingCommand}"
+                        Margin="0,10,0,0" Padding="6,4"/>
 
-                <Button Grid.Row="3" Content="← Remove" Command="{Binding RemoveMappingCommand}"
-                        Width="120" Margin="0,20,0,0" Padding="6,4"/>
-
-                <Button Grid.Row="4" Content="Refresh" Command="{Binding RefreshCommand}"
-                        Width="120" Margin="0,5,0,0" Padding="6,4"/>
-            </Grid>
+                <Button Content="Refresh" Command="{Binding RefreshCommand}"
+                        Margin="0,10,0,0" Padding="6,4"/>
+            </StackPanel>
 
             <!-- Selected Mappings (right) -->
             <GroupBox Grid.Column="2" Header="Active Mappings" Margin="5,0,0,0">
@@ -132,14 +117,24 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <Button Grid.Row="1" Content="Save Configuration" Command="{Binding SaveCommand}"
-                            Margin="0,10,0,0" Padding="8,6" HorizontalAlignment="Right"/>
+                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                            <TextBlock Text="Min:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox Width="60" Padding="2"
+                                     Text="{Binding SelectedMapping.Min, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="Max:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Width="60" Padding="2"
+                                     Text="{Binding SelectedMapping.Max, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <Button Content="Save Configuration" Command="{Binding SaveCommand}"
+                                Padding="8,6" HorizontalAlignment="Right"/>
+                    </StackPanel>
                 </Grid>
             </GroupBox>
         </Grid>
 
         <!-- Bottom status -->
-        <StatusBar Grid.Row="2" Margin="0,10,0,0">
+        <StatusBar Grid.Row="1" Margin="0,10,0,0">
             <TextBlock Text="{Binding StatusMessage}"/>
         </StatusBar>
     </Grid>

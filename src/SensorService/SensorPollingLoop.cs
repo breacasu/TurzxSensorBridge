@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -68,9 +69,11 @@ namespace SensorService
                     $"\"labelOrig\":\"{EscapeJson(match.LabelOrig)}\"," +
                     $"\"labelUser\":\"{EscapeJson(match.LabelUser)}\"," +
                     $"\"deviceName\":\"{EscapeJson(match.DeviceName)}\"," +
-                    $"\"value\":{match.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                    $"\"value\":{match.Value.ToString(CultureInfo.InvariantCulture)}," +
                     $"\"unit\":\"{EscapeJson(match.Unit)}\"," +
                     $"\"readingType\":\"{match.ReadingType}\"," +
+                    (selected.Min.HasValue ? $"\"min\":{selected.Min.Value.ToString(CultureInfo.InvariantCulture)}," : "") +
+                    (selected.Max.HasValue ? $"\"max\":{selected.Max.Value.ToString(CultureInfo.InvariantCulture)}," : "") +
                     $"\"isStale\":false}}");
             }
 
@@ -145,10 +148,12 @@ namespace SensorService
                 string labelOrig = ExtractJsonString(obj, "labelOrig");
                 string deviceName = ExtractJsonString(obj, "deviceName");
                 string readingType = ExtractJsonString(obj, "readingType");
+                double? min = ExtractJsonNumberOrNull(obj, "min");
+                double? max = ExtractJsonNumberOrNull(obj, "max");
 
                 if (!string.IsNullOrEmpty(alias) && !string.IsNullOrEmpty(labelOrig))
                 {
-                    result.Add(new SelectedSensorEntry { Alias = alias, LabelOrig = labelOrig, DeviceName = deviceName ?? "", ReadingType = readingType ?? "" });
+                    result.Add(new SelectedSensorEntry { Alias = alias, LabelOrig = labelOrig, DeviceName = deviceName ?? "", ReadingType = readingType ?? "", Min = min, Max = max });
                 }
 
                 pos = objEnd + 1;
@@ -174,6 +179,25 @@ namespace SensorService
             return json.Substring(valStart + 1, valEnd - valStart - 1);
         }
 
+        private static double? ExtractJsonNumberOrNull(string json, string key)
+        {
+            int keyIdx = json.IndexOf($"\"{key}\"", StringComparison.OrdinalIgnoreCase);
+            if (keyIdx < 0) return null;
+            int colonIdx = json.IndexOf(':', keyIdx + key.Length + 2);
+            if (colonIdx < 0) return null;
+            int valStart = colonIdx + 1;
+            while (valStart < json.Length && (json[valStart] == ' ' || json[valStart] == '\t')) valStart++;
+            if (valStart >= json.Length) return null;
+            if (json[valStart] == 'n') return null;
+            int valEnd = valStart;
+            while (valEnd < json.Length && (char.IsDigit(json[valEnd]) || json[valEnd] == '.' || json[valEnd] == '-' || json[valEnd] == '+' || json[valEnd] == 'e' || json[valEnd] == 'E'))
+                valEnd++;
+            if (valEnd == valStart) return null;
+            if (double.TryParse(json.Substring(valStart, valEnd - valStart), NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
+                return result;
+            return null;
+        }
+
         private static string EscapeJson(string s)
         {
             return s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
@@ -186,5 +210,7 @@ namespace SensorService
         public string LabelOrig { get; set; } = string.Empty;
         public string DeviceName { get; set; } = string.Empty;
         public string ReadingType { get; set; } = string.Empty;
+        public double? Min { get; set; }
+        public double? Max { get; set; }
     }
 }

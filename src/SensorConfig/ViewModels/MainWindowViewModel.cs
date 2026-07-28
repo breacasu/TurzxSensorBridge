@@ -59,6 +59,8 @@ namespace SensorConfig.ViewModels
             {
                 _selectedAvailableSensor = value;
                 OnPropertyChanged();
+                if (value != null)
+                    AliasInput = value.LabelOrig;
                 ((RelayCommand)AddMappingCommand).RaiseCanExecuteChanged();
             }
         }
@@ -143,7 +145,7 @@ namespace SensorConfig.ViewModels
                 try
                 {
                     IsAvailable = _reader.IsAvailable();
-                    RefreshAvailableSensors();
+                    FullRefreshAvailableSensors();
                 }
                 catch (Exception ex)
                 {
@@ -152,7 +154,7 @@ namespace SensorConfig.ViewModels
             });
         }
 
-        private void RefreshAvailableSensors()
+        private void FullRefreshAvailableSensors()
         {
             try
             {
@@ -173,13 +175,34 @@ namespace SensorConfig.ViewModels
                 {
                     AvailableSensors = new ObservableCollection<LibreSensorReading>(sensors);
                     StatusMessage = $"{sensors.Count} sensor(s) found";
-
                     UpdateSelectedSensorLiveValues(sensors);
                 });
             }
             catch
             {
-                // Timer callback swallows exceptions
+            }
+        }
+
+        private void RefreshAvailableSensors()
+        {
+            try
+            {
+                if (!_reader.IsAvailable())
+                {
+                    IsAvailable = false;
+                    return;
+                }
+
+                IsAvailable = true;
+                var sensors = _reader.ReadAllSensors();
+                App.Current?.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = $"{sensors.Count} sensor(s) found";
+                    UpdateSelectedSensorLiveValues(sensors);
+                });
+            }
+            catch
+            {
             }
         }
 
@@ -299,7 +322,11 @@ namespace SensorConfig.ViewModels
             _canExecute = canExecute;
         }
 
-        public event EventHandler? CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
 
         public bool CanExecute(object? parameter)
         {
@@ -313,7 +340,7 @@ namespace SensorConfig.ViewModels
 
         public void RaiseCanExecuteChanged()
         {
-            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 }

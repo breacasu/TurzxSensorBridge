@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 
@@ -50,6 +51,7 @@ namespace PatchModule
         private PropertyInfo? _dataNameProp;
         private PropertyInfo? _mDataDisplayNameProp;
         private PropertyInfo? _mDataValueProp;
+        private PropertyInfo? _mDataRateProp;
         private PropertyInfo? _graphItemMDataProp;
         private PropertyInfo? _graphItemDisplayNameProp;
         private PropertyInfo? _graphItemTypeNameProp;
@@ -58,6 +60,7 @@ namespace PatchModule
         private readonly Dictionary<string, object> _sensorObjects = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _displayNameByDataName = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _formattedValueByDataName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, (double? min, double? max)> _minMaxByDataName = new(StringComparer.OrdinalIgnoreCase);
         private readonly object _aliasLock = new();
 
         private Timer? _timer;
@@ -97,6 +100,7 @@ namespace PatchModule
                 _dataNameProp = _mDataType.GetProperty("DataName", BindingFlags.Public | BindingFlags.Instance);
                 _mDataDisplayNameProp = _mDataType.GetProperty("DisplayName", BindingFlags.Public | BindingFlags.Instance);
                 _mDataValueProp = _mDataType.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance);
+                _mDataRateProp = _mDataType.GetProperty("Rate", BindingFlags.Public | BindingFlags.Instance);
                 _graphItemMDataProp = _graphItemType.GetProperty("m_data", BindingFlags.Public | BindingFlags.Instance);
                 _graphItemDisplayNameProp = _graphItemType.GetProperty("DisplayName", BindingFlags.Public | BindingFlags.Instance);
                 _graphItemTypeNameProp = _graphItemType.GetProperty("TypeName", BindingFlags.Public | BindingFlags.Instance);
@@ -185,6 +189,16 @@ namespace PatchModule
                 _formattedValueByDataName.Clear();
                 foreach (var kv in formattedValueByDataName)
                     _formattedValueByDataName[kv.Key] = kv.Value;
+            }
+        }
+
+        public void SetMinMax(IReadOnlyDictionary<string, (double? min, double? max)> minMaxByDataName)
+        {
+            lock (_aliasLock)
+            {
+                _minMaxByDataName.Clear();
+                foreach (var kv in minMaxByDataName)
+                    _minMaxByDataName[kv.Key] = kv.Value;
             }
         }
 
@@ -595,15 +609,45 @@ namespace PatchModule
                 if (string.IsNullOrEmpty(dataName)) return;
 
                 string? formattedValue;
+                (double? min, double? max) minMax;
                 lock (_aliasLock)
                 {
                     if (!_formattedValueByDataName.TryGetValue(dataName!, out formattedValue)) return;
+                    _minMaxByDataName.TryGetValue(dataName!, out minMax);
                 }
 
                 var currentValue = _mDataValueProp.GetValue(mData) as string;
                 if (currentValue != formattedValue)
                 {
                     _mDataValueProp.SetValue(mData, formattedValue);
+                }
+
+                if (_mDataRateProp != null)
+                {
+                    double? min = minMax.min;
+                    double? max = minMax.max;
+                    if (!min.HasValue || !max.HasValue)
+                    {
+                        if (formattedValue != null && formattedValue.IndexOf('%') >= 0)
+                        {
+                            min = 0;
+                            max = 100;
+                        }
+                    }
+                    if (min.HasValue && max.HasValue)
+                    {
+                        double range = max.Value - min.Value;
+                        if (range > 0)
+                        {
+                            string numStr = new string(formattedValue.TakeWhile(c => char.IsDigit(c) || c == '.' || c == '-').ToArray());
+                            if (double.TryParse(numStr, out double sensorValue))
+                            {
+                                double rate = (sensorValue - min.Value) / range;
+                                rate = Math.Max(0.0, Math.Min(1.0, rate));
+                                _mDataRateProp.SetValue(mData, rate);
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)

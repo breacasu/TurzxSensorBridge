@@ -238,10 +238,12 @@ namespace PatchModule
             try
             {
                 // Rate (double, 0.0-1.0) drives progress-bar/gauge fill only.
-                // We don't know the sensor's natural max value, so this stays
-                // a best-effort placeholder (0) rather than a meaningless
-                // guess; the actual displayed text comes from Value below.
-                _valueProp?.SetValue(obj, value);
+                // It is set by AcceptListPatcher.PushLiveValueIfOurSensor using
+                // the user-configured min/max range — do NOT overwrite it here
+                // with the raw sensor value (e.g. 25.0 for 25%), which would
+                // cause bar overflow (width * 25.0 instead of width * 0.25).
+                // The actual displayed text comes from the string Value below.
+
 
                 // Value (string) is what widgets actually render as text.
                 // Use the real property setter (not a backing field) so

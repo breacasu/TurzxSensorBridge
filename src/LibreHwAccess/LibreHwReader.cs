@@ -73,8 +73,9 @@ namespace LibreHwAccess
                     IsGpuEnabled = true,
                     IsStorageEnabled = true,
                     IsMemoryEnabled = true,
-                    IsNetworkEnabled = false,
-                    IsPsuEnabled = false,
+                    IsNetworkEnabled = true,
+                    IsPsuEnabled = true,
+                    IsBatteryEnabled = true,
                 };
                 _computer.Open();
             }
@@ -120,14 +121,12 @@ namespace LibreHwAccess
 
                 foreach (var sensor in hardware.Sensors)
                 {
-                    if (!sensor.Value.HasValue) continue;
-
                     result.Add(new LibreSensorReading
                     {
                         DeviceName = hardware.Name,
                         LabelOrig = sensor.Name,
                         LabelUser = sensor.Name,
-                        Value = sensor.Value.Value,
+                        Value = sensor.Value ?? 0,
                         Unit = UnitForSensorType(sensor.SensorType),
                         ReadingType = sensor.SensorType.ToString(),
                     });

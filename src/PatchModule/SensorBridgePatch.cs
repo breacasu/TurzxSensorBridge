@@ -19,8 +19,10 @@ namespace PatchModule
         private DataSourceInjector? _injector;
         private PipeClient? _pipeClient;
         private AcceptListPatcher? _acceptListPatcher;
+        private Process? _sensorServiceProcess;
         private readonly Dictionary<string, string> _aliasToLabel = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _formattedValueByDataName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, (double? min, double? max)> _minMaxByDataName = new(StringComparer.OrdinalIgnoreCase);
 
         public string Name => "TurzxSensorBridge";
         public int InterfaceVersion => 1;
@@ -80,7 +82,7 @@ namespace PatchModule
         /// resolved relative to this assembly's own location so it works
         /// regardless of where TurzxPatcher/TURZX itself is installed.
         /// </summary>
-        private static void EnsureSensorServiceRunning()
+        private void EnsureSensorServiceRunning()
         {
             try
             {
@@ -131,7 +133,19 @@ namespace PatchModule
                     CreateNoWindow = true,
                     WindowStyle = ProcessWindowStyle.Hidden,
                 };
-                Process.Start(psi);
+                _sensorServiceProcess = Process.Start(psi);
+                AppDomain.CurrentDomain.ProcessExit += (s, e) =>
+                {
+                    try
+                    {
+                        if (_sensorServiceProcess != null && !_sensorServiceProcess.HasExited)
+                        {
+                            _sensorServiceProcess.Kill();
+                            Console.WriteLine("[TurzxSensorBridge] SensorService stopped on exit");
+                        }
+                    }
+                    catch { }
+                };
             }
             catch (Exception ex)
             {
@@ -167,6 +181,7 @@ namespace PatchModule
                     if (!string.IsNullOrEmpty(unit))
                         formatted += " " + unit;
                     _formattedValueByDataName[dataName] = formatted;
+                    _minMaxByDataName[dataName] = (sensor.Min, sensor.Max);
                 }
                 _acceptListPatcher?.SetAliases(_aliasToLabel.Keys);
                 if (_injector != null)
@@ -178,6 +193,7 @@ namespace PatchModule
                     _acceptListPatcher?.SetSensorObjects(_injector.SensorObjectsByDataName);
                     _acceptListPatcher?.SetDisplayNames(_injector.DisplayNameByDataName);
                     _acceptListPatcher?.SetFormattedValues(_formattedValueByDataName);
+                    _acceptListPatcher?.SetMinMax(_minMaxByDataName);
                 }
             }
             catch (Exception ex)
@@ -214,7 +230,9 @@ namespace PatchModule
                     LabelOrig = ExtractJsonValue(inner, "labelOrig"),
                     DeviceName = ExtractJsonValue(inner, "deviceName"),
                     Value = ExtractJsonNumber(inner, "value"),
-                    Unit = ExtractJsonValue(inner, "unit")
+                    Unit = ExtractJsonValue(inner, "unit"),
+                    Min = ExtractJsonNumberOrNull(inner, "min"),
+                    Max = ExtractJsonNumberOrNull(inner, "max")
                 };
 
                 if (!string.IsNullOrEmpty(entry.Alias) && !string.IsNullOrEmpty(entry.LabelOrig))
@@ -285,6 +303,25 @@ namespace PatchModule
             return 0;
         }
 
+        private static double? ExtractJsonNumberOrNull(string json, string key)
+        {
+            int keyIdx = json.IndexOf($"\"{key}\"");
+            if (keyIdx < 0) return null;
+            int colonIdx = json.IndexOf(':', keyIdx + key.Length + 2);
+            if (colonIdx < 0) return null;
+            int valStart = colonIdx + 1;
+            while (valStart < json.Length && json[valStart] == ' ') valStart++;
+            if (valStart >= json.Length) return null;
+            if (json[valStart] == 'n') return null;
+            int valEnd = valStart;
+            while (valEnd < json.Length && (char.IsDigit(json[valEnd]) || json[valEnd] == '.' || json[valEnd] == '-' || json[valEnd] == '+' || json[valEnd] == 'e' || json[valEnd] == 'E'))
+                valEnd++;
+            if (valEnd == valStart) return null;
+            if (double.TryParse(json.Substring(valStart, valEnd - valStart), NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
+                return result;
+            return null;
+        }
+
         private struct SensorEntry
         {
             public string Alias;
@@ -292,6 +329,8 @@ namespace PatchModule
             public string DeviceName;
             public double Value;
             public string Unit;
+            public double? Min;
+            public double? Max;
         }
     }
 }
