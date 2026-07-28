@@ -67,7 +67,7 @@ jobs:
 
           # Extract release notes from README.md Version History section
           $readme = Get-Content "README.md" -Raw
-          $pattern = "(?ms)### v$version.*?(?=### v|\Z)"
+          $pattern = "(?ms)### v$version.*?(?=### v|^## |\Z)"
           if ($readme -match $pattern) {
             $notes = $matches[0].Trim()
           } else {
