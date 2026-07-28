@@ -39,7 +39,9 @@ Download `TurzxPatcherSetup-*.exe` from the [releases page](https://github.com/b
 1. Install [TurzxPatcher](https://github.com/breacasu/TurzxPatcher) in the TURZX directory.
 2. Copy the contents of the `patches\` folder (PatchModule.dll, SensorService\, SensorConfig\) into the `patches\` folder next to `TURZX.exe`.
 3. Run `SensorConfig.exe` as Administrator to configure your sensors.
-4. Launch TURZX via TurzxPatcher as Administrator.
+4. Launch TURZX via TurzxPatcher as Administrator:
+   - **With Lian Li 8.8" display**: `TurzxPatcher.exe` (default, applies A088 display patch + plugins)
+   - **With a natively supported TURZX display**: `TurzxPatcher.exe --no-a088` (skips display patch, loads plugins only)
 
 ## Configuring Sensors
 
