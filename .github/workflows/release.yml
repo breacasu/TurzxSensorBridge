@@ -65,11 +65,21 @@ jobs:
           $version = "${{ steps.version.outputs.version }}"
           $installer = (Get-ChildItem TurzxPatcher\installer\output\*.exe | Select-Object -First 1).FullName
 
+          # Extract release notes from README.md Version History section
+          $readme = Get-Content "README.md" -Raw
+          $pattern = "(?ms)### v$version.*?(?=### v|\Z)"
+          if ($readme -match $pattern) {
+            $notes = $matches[0].Trim()
+          } else {
+            $notes = "v$version"
+          }
+          Write-Host "Release notes:`n$notes"
+
           $releaseArgs = @(
             'release', 'create', "v$version",
             $installer,
             '--title', "v$version",
-            '--notes', "## TurzxSensorBridge v$version`n`nCombined installer for TurzxPatcher + TurzxSensorBridge.`n`nDownload and run the installer exe. It will auto-detect your TURZX installation directory and deploy all components.`n`n### Components`n- TurzxPatcher.exe (A088 display patch + plugin host)`n- TurzxSensorBridge (PatchModule + SensorService + SensorConfig)`n`n### Requirements`n- Windows x64`n- .NET Framework 4.8`n- TURZX V4.2.1.3 or later`n- Administrator privileges`n`n### Also requires [TurzxPatcher](https://github.com/breacasu/TurzxPatcher)`n(Bundled in this installer — no separate download needed)",
+            '--notes', $notes,
             '--verify-tag'
           )
           & gh @releaseArgs
