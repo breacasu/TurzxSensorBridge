@@ -76,7 +76,12 @@ With min/max, e.g. water temperature 20–42°C at a current value of 28°C:
 
 ## Version History
 
-### v2.3.0 (current)
+### v2.4.0 (current)
+- Installer now includes display type selection (Lian Li 8.8" A088 vs natively supported display) — no CLI commands needed
+- Desktop shortcut and autostart automatically use `--no-a088` flag when natively supported display is selected
+- Documented `--no-a088` flag for manual installation
+
+### v2.3.0
 - **Configurable min/max per sensor** for bar/gauge widget fill (`Rate = (value - min) / (max - min)`)
 - **Auto-default 0–100** for percent sensors without configured min/max
 - **Fixed Rate overflow bug**: raw values (e.g. 25.0) were set directly as Rate instead of 0.25

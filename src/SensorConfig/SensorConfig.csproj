@@ -10,7 +10,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-    <Version>2.3.0</Version>
+    <Version>2.4.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
